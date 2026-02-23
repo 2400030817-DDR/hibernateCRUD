@@ -3,6 +3,10 @@ package com.klu.demo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 @RestController
@@ -12,7 +16,7 @@ public class ProductController {
     @Autowired
     private ProductRepository repo;
 
-    // Insert Product
+    // Add Product
     @PostMapping("/add")
     public Product addProduct(@RequestBody Product product) {
         return repo.save(product);
@@ -24,28 +28,66 @@ public class ProductController {
         return repo.findAll();
     }
 
-    // Get Product by ID
-    @GetMapping("/{id}")
-    public Product getById(@PathVariable Long id) {
-        return repo.findById(id).orElse(null);
+    // Sorting
+    @GetMapping("/sort/price/asc")
+    public List<Product> sortPriceAsc() {
+        return repo.sortByPriceAsc();
     }
 
-    // Update Product
-    @PutMapping("/update/{id}")
-    public Product updateProduct(@PathVariable Long id, @RequestBody Product product) {
-        Product p = repo.findById(id).orElse(null);
-        if (p != null) {
-            p.setPrice(product.getPrice());
-            p.setQuantity(product.getQuantity());
-            return repo.save(p);
-        }
-        return null;
+    @GetMapping("/sort/price/desc")
+    public List<Product> sortPriceDesc() {
+        return repo.sortByPriceDesc();
     }
 
-    // Delete Product
-    @DeleteMapping("/delete/{id}")
-    public String deleteProduct(@PathVariable Long id) {
-        repo.deleteById(id);
-        return "Product Deleted";
+    @GetMapping("/sort/quantity")
+    public List<Product> sortQuantity() {
+        return repo.sortByQuantityDesc();
+    }
+
+    // Pagination
+    @GetMapping("/page")
+    public Page<Product> getPage(@RequestParam int page,
+                                 @RequestParam int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return repo.findAll(pageable);
+    }
+
+    // Aggregate Functions
+    @GetMapping("/count")
+    public long countProducts() {
+        return repo.countProducts();
+    }
+
+    @GetMapping("/count/available")
+    public long countAvailable() {
+        return repo.countAvailable();
+    }
+
+    @GetMapping("/minprice")
+    public Double minPrice() {
+        return repo.minPrice();
+    }
+
+    @GetMapping("/maxprice")
+    public Double maxPrice() {
+        return repo.maxPrice();
+    }
+
+    @GetMapping("/group")
+    public List<Object[]> groupByDescription() {
+        return repo.groupByDescription();
+    }
+
+    // Price Range Filter
+    @GetMapping("/filter")
+    public List<Product> filterByPrice(@RequestParam double min,
+                                       @RequestParam double max) {
+        return repo.findByPriceRange(min, max);
+    }
+
+    // LIKE Search
+    @GetMapping("/search")
+    public List<Product> search(@RequestParam String name) {
+        return repo.findByNameLike("%" + name + "%");
     }
 }
